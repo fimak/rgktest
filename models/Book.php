@@ -3,6 +3,7 @@
 namespace app\models;
 
 use Yii;
+use yii\db\ActiveRecord;
 use yii\helpers\Url;
 
 /**
@@ -37,7 +38,8 @@ class Book extends \yii\db\ActiveRecord
             [['name', 'preview', 'author_id', 'date'], 'required'],
             [['author_id'], 'integer'],
             [['date', 'created_at', 'updated_at'], 'safe'],
-            [['name', 'preview'], 'string', 'max' => 255]
+            [['name'], 'string', 'max' => 255],
+            [['preview'], 'file', 'extensions' => 'jpg']
         ];
     }
 
@@ -51,9 +53,23 @@ class Book extends \yii\db\ActiveRecord
             'name' => 'Название',
             'preview' => 'Превью',
             'author' => 'Автор',
+            'author_id' => 'Автор',
             'date' => 'Дата выхода книги',
             'created_at' => 'Дата добавления',
             'updated_at' => 'Дата обнавления',
+        ];
+    }
+
+    public function behaviors()
+    {
+        return [
+            'dateTimeStampBehavior' => [
+                'class' => 'app\behaviors\DateTimeStampBehavior',
+                'attributes' => [
+                    ActiveRecord::EVENT_BEFORE_INSERT => ['created_at', 'updated_at'],
+                    ActiveRecord::EVENT_BEFORE_UPDATE => ['updated_at'],
+                ],
+            ],
         ];
     }
 

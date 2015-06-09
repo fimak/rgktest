@@ -9,6 +9,7 @@ use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\web\UploadedFile;
 
 /**
  * BookController implements the CRUD actions for Book model.
@@ -32,7 +33,7 @@ class BookController extends Controller
                         'allow' => true,
                     ],
                     [
-                        'actions' => ['update', 'view', 'delete'],
+                        'actions' => ['update', 'view', 'delete', 'create'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -83,13 +84,21 @@ class BookController extends Controller
     {
         $model = new Book();
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
-        } else {
-            return $this->render('create', [
-                'model' => $model,
-            ]);
+        if ($model->load(Yii::$app->request->post())) {
+
+            $model->preview = UploadedFile::getInstance($model, 'preview');
+
+            if ($model->preview && $model->validate()) {
+                $model->preview->saveAs('upload/' . $model->preview->baseName . '.' . $model->preview->extension);
+                $model->preview = $model->preview->baseName . '.' . $model->preview->extension;
+                $model->save(false);
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
+            var_dump($model->getErrors());
         }
+        return $this->render('create', [
+            'model' => $model,
+        ]);
     }
 
     /**
@@ -102,14 +111,22 @@ class BookController extends Controller
     {
         $model = $this->findModel($id);
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->session->setFlash('success', 'The book was updated');
-            return $this->redirect(Yii::$app->session['reference']);
-        } else {
-            return $this->render('update', [
-                'model' => $model,
-            ]);
+        if ($model->load(Yii::$app->request->post())){
+
+            $model->preview = UploadedFile::getInstance($model, 'preview');
+
+            if ($model->preview && $model->validate()) {
+                $model->preview->saveAs('upload/' . $model->preview->baseName . '.' . $model->preview->extension);
+                $model->preview = $model->preview->baseName . '.' . $model->preview->extension;
+                $model->save(false);
+                Yii::$app->session->setFlash('success', 'The book was updated');
+                return $this->redirect(Yii::$app->session['reference']);
+            }
         }
+
+        return $this->render('update', [
+            'model' => $model,
+        ]);
     }
 
     /**
